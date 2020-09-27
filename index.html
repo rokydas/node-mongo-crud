@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        form{
+            width: 30%;
+        }
+        .form-holder{
+            text-align: center;
+        }
+        #users{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Look MOM, I have a Mongo Database</h1>
+    <div class="form-holder">
+        
+        <form action="/addUser" method="post">
+            <input class="form-control" type="text" placeholder="First Name" name="firstName">
+            <input class="form-control" type="text" placeholder="Last Name" name="lastName">
+            <input class="form-control" type="submit" value="Add User">
+        </form>
+    </div>
+    <div id="users"></div>
+    <div id="details-user"></div>
+    <script>
+        const deleteUser = (event, id) => {
+            // console.log(id);
+            fetch(`/delete/${id}`, {
+                method: 'DELETE'
+            })
+            .then(res => res.json())
+            .then(result => {
+                console.log('Deleted successfully');
+                if(result){
+                    event.target.parentNode.style.display = 'none';
+                }
+            })
+        }
+
+        const loadUser = (id) => {
+            fetch(`user/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                // showUser(data);
+                const detailsUser = document.getElementById('details-user');
+                detailsUser.innerHTML = `
+                    <h3>Update: ${data._id}</h3>
+                    First Name: <br>
+                    <input id="first-name" type="text" value="${data.firstName}"><br>
+                    Last Name: <br>
+                    <input id="last-name" type="text" value="${data.lastName}"><br>
+                    <button onclick="updateUser('${data._id}')" class="btn btn-success">Update</button>
+                `
+            })
+        }
+
+        const updateUser = (id) => {
+            // console.log('updating')
+            const firstName = document.getElementById('first-name').value;
+            const lastName = document.getElementById('last-name').value;
+            const user = {
+                _id: id,
+                firstName: firstName,
+                lastName: lastName
+            }
+            fetch(`/update/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-type': 'application/json'},
+                body: JSON.stringify(user)
+            })
+            .then(res => res.json())
+            .then(result => {
+                // console.log('updated')
+                if(result){
+                    loadUsers();
+                    document.getElementById('details-user').innerHTML = '';
+                }
+            })
+        }
+
+        const showUser = (data) => {
+            const detailsUser = document.getElementById('details-user');
+            const firstName = document.createElement('input');
+            firstName.value = data.firstName;
+            const lastName = document.createElement('input');
+            lastName.value = data.lastName;
+            detailsUser.appendChild(firstName);
+            detailsUser.appendChild(lastName);
+        }
+
+        const loadUsers = () => {
+            fetch('/users')
+            .then(res => res.json())
+            .then(data => {
+                // console.log(data);
+                const users = document.getElementById('users');
+                users.innerHTML = '';
+                data.map(userData => {
+                    const user = document.createElement('h5');
+                    user.innerHTML = `${userData.firstName} ${userData.lastName} 
+                    <button onclick="loadUser('${userData._id}')" class="btn btn-primary">Update</button>
+                    <button onclick="deleteUser(event, '${userData._id}')" class="btn btn-danger">Delete</button>`;
+                    users.appendChild(user);
+                })
+            })
+        }
+        loadUsers();
+    </script>
+    
+</body>
+</html>
